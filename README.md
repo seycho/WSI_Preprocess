@@ -43,3 +43,5 @@ To Do
 3. Make reference image of load process.
    
 Also prepare and upload reference WSI image link and annotation coordinates.
+
+$Level_{apt} = \frac{Pixel Size_{patch}} / {y}$
