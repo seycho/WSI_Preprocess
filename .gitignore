@@ -1,4 +1,5 @@
 .ipynb_checkpoints/
+.example/ipynb_checkpoints/
 .modules/__pycache__/
 .modules/*/__pycache__/
 .modules/*/*/__pycache__/

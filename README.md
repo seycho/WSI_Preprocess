@@ -12,10 +12,16 @@ Calculate color ranged region at Hue, Saturation, Value, Laplacian chennels.
 Make intersection region for each chennel, Also it can consider multiple color range set.   
 Final mask array is union of mask arrays which calculated own color range set.   
    
-[To Do 1]   
+![image](./readme_image/algo.png)   
    
 For easy to see color range selecter's performance,   
 There are show image and plot color histogram function in preview.py   
+   
+![image](./readme_image/range_selecter_0.png)   
+   
+![image](./readme_image/range_selecter_1.png)   
+   
+WSI get from https://portal.gdc.cancer.gov/cases/595fc3ad-f603-421b-b130-52f1f617050b.   
    
 WSI Patch Image Importer
 ===========
@@ -27,21 +33,17 @@ WSI importer class have micron to pixel converter.
 Input datas are must have micron values and resizing pixel value.   
 Process find apt import slide level to optimizing extract process.   
    
-[To Do 2]   
+$f_{L} = \Big| log\left(\frac{S_{L}}{2\times S_{R}}\right) \Big| $   
+Each level ratio factors $f_{L}$ are defined this equation.   
+$S_{L}$ is patch pixel size at each level, $S_{R}$ is resizing pixel size.   
+Apt import slide level is decided which have minimum of $f_{L}$.
    
 After that, Set default pixel size of WSI and each mask,   
 For when user can get patch image and mask even just input coordinates value.   
    
 Importer class also can determine some patch image is usable or not by referencing same located mask.   
    
-[To Do 3]   
-   
 To Do
 ===========
-1. Draw algorithm and image of image masking preprocessing.
-2. Write apt import slide level finder formula.
-3. Make reference image of load process.
+Make multiple masking process with multiprocessing.   
    
-Also prepare and upload reference WSI image link and annotation coordinates.
-
-$Level_{apt} = \frac{Pixel Size_{patch}} / {y}$
