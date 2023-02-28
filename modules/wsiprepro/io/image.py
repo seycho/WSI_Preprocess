@@ -3,8 +3,7 @@ from numpy import  arange, array, log10, meshgrid, uint8, stack
 from numpy.random import shuffle
 from tifffile import imread, imwrite
 
-
-__all__ = ["SaveMaskBigtiff", "GetRandomCoordinates", "WSIPatchImporter"]
+__all__ = ["SaveMaskBigtiff", "GetBoundsDic", "GetMppDic", "GetRandomCoordinates", "WSIPatchImporter"]
 
 
 def SaveMaskBigtiff(pathMask, mask):
@@ -33,6 +32,55 @@ def SaveMaskBigtiff(pathMask, mask):
     imwrite(pathMask, stack([mask, mask, mask], 2), compression="lzw", bigtiff=True, tile=(256, 256))
 
     return None
+
+def GetBoundsDic(properties):
+    """Make bounds informations dictionary from WSI properties.
+
+    Parameters
+    ----------
+    properties : openslide._PropertyMap
+        WSI properties, like dictionary type.
+
+    Returns
+    -------
+    boundsDic : Dictionary
+        bounds x, y, width, height dictionary.
+    """
+    boundsDic = {}
+    if "openslide.bounds-x" in properties:
+        boundsDic['x'] = int(properties["openslide.bounds-x"])
+        boundsDic['y'] = int(properties["openslide.bounds-y"])
+        boundsDic['w'] = int(properties["openslide.bounds-width"])
+        boundsDic['h'] = int(properties["openslide.bounds-height"])
+    else:
+        boundsDic['x'] = 0
+        boundsDic['y'] = 0
+        boundsDic['w'] = int(properties["openslide.level[0].width"])
+        boundsDic['h'] = int(properties["openslide.level[0].height"])
+
+    return boundsDic
+
+def GetMppDic(properties):
+    """Make micron per pixel informations dictionary from WSI properties.
+
+    Parameters
+    ----------
+    properties : openslide._PropertyMap
+        WSI properties, like dictionary type.
+
+    Returns
+    -------
+    mppDic : Dictionary
+        mpp x, y, min dictionary.
+    """
+    mppDic = {}
+    _x = float(properties["openslide.mpp-x"])
+    _y = float(properties["openslide.mpp-y"])
+    mppDic['x'] = _x
+    mppDic['y'] = _y
+    mppDic["min"] = min(_x, _y)
+
+    return mppDic
 
 def GetRandomCoordinates(sizePatch, sizeFull):
     """Make random coordinates of patch images.
@@ -116,7 +164,7 @@ class WSIPatchImporter:
         Current patch image import pixel size.
     resizePixelXY
         Current patch image resizing pixel size.
-        
+
     Method
     ------
     SetProperties(self)
@@ -156,24 +204,8 @@ class WSIPatchImporter:
         But if they have different values, Default mpp paramter is set minimum case.
         """
         properties = self.handle["WSI"].properties
-        self.boundsDic = {}
-        if "openslide.bounds-x" in properties:
-            self.boundsDic['x'] = int(properties["openslide.bounds-x"])
-            self.boundsDic['y'] = int(properties["openslide.bounds-y"])
-            self.boundsDic['w'] = int(properties["openslide.bounds-width"])
-            self.boundsDic['h'] = int(properties["openslide.bounds-height"])
-        else:
-            self.boundsDic['x'] = 0
-            self.boundsDic['y'] = 0
-            self.boundsDic['w'] = int(properties["openslide.level[0].width"])
-            self.boundsDic['h'] = int(properties["openslide.level[0].height"])
-
-        self.mppDic = {}
-        _x = float(properties["openslide.mpp-x"])
-        _y = float(properties["openslide.mpp-y"])
-        self.mppDic['x'] = _x
-        self.mppDic['y'] = _y
-        self.mppDic["min"] = min(_x, _y)
+        self.boundsDic = GetBoundsDic(properties)
+        self.mppDic = GetMppDic(properties)
         return None
 
     def SetDownsamples(self):

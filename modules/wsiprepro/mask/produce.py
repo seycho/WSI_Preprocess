@@ -102,7 +102,7 @@ def RangeSelecter(hsvlDic, rangeSelectDic):
 
     return imgT.astype(float)
 
-def RegionMasking(img, rangeSelectList, gauthSelect):
+def RegionMasking(hsvlDic, rangeSelectList, gauthSelect):
     """Make color range selected specific region as Mask.
 
     Process
@@ -113,12 +113,16 @@ def RegionMasking(img, rangeSelectList, gauthSelect):
 
     Parameters
     ----------
-    img : 3-D Array
-        Original RGB chennel array will convert and split
+    hsvlDic : Dictionary
+        Contained Hue, Saturation, Value, Laplacian array.
+        {'h' : Hue 2-D Array,
+        's' : Saturation 2-D Array,
+        'v' : Value 2-D Array,
+        'l' : Laplacian 2-D Array}
 
     rangeSelectList : List
         List of color range dictionary.
-        Each dictionary contained Hue, Saturation, Value, Laplacian selection range
+        Each dictionary contained Hue, Saturation, Value, Laplacian selection range.
         {'h' : (start, end),
         's' : (start, end),
         'v' : (start, end),
@@ -151,11 +155,10 @@ def RegionMasking(img, rangeSelectList, gauthSelect):
 
     >>> hsvlDic = CvtHSVLDic(img)
     >>> ShowSelectHistogram(hsvlDic, rangeSelectList[0])
-    >>> maskSpec = RegionMasking(img, rangeSelectList, gauthSelect)
+    >>> maskSpec = RegionMasking(hsvlDic, rangeSelectList, gauthSelect)
     """
-    hsvlDic = CvtHSVLDic(img)
     # Process 1
-    mask = zeros((img.shape[0], img.shape[1]))
+    mask = zeros((hsvlDic['h'].shape[0], hsvlDic['h'].shape[1]))
     # Process 2 (for), 3 (+=)
     for rangeSelectDic in rangeSelectList:
         mask += RangeSelecter(hsvlDic, rangeSelectDic)

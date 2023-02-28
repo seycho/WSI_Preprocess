@@ -1,0 +1,4 @@
+pathRootSave	/mnt/external_storage/pathology/WSI/preprocess/TCGA/lung/
+optionSpec	option_TCGA-38-A44F-01Z-00-DX1.dump
+downsample	6
+numProcess	8

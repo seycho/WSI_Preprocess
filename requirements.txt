@@ -1,0 +1,8 @@
+imagecodecs
+matplotlib
+numpy
+opencv-python
+openslide-python
+PyMySQL
+pyparsing
+tifffile

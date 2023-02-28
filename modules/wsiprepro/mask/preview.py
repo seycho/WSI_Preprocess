@@ -1,6 +1,6 @@
 from cv2 import cvtColor, fillPoly, imwrite, inRange, resize, COLOR_BGR2RGB
 from matplotlib.pyplot import axis, axvspan, figure, imshow, plot, show, subplot, title, yscale
-from numpy import histogram, hstack, round, uint8
+from numpy import histogram, hstack, uint8
 from numpy.linalg import norm
 
 __all__ = ["DiagnoalNormalize", "ShowSelectHistogram", "ShowOverlapMask"]
@@ -34,7 +34,7 @@ def DiagnoalNormalize(lengthX, lengthY):
 
     return normalizeX, normalizeY
 
-def ShowSelectHistogram(hsvlDic, rangeSelect):
+def ShowSelectHistogram(hsvlDic, rangeSelectDic):
     """Show process step of RangeSelecter function.
 
     This function just show process of color range selection in using RangeSelecter process.
@@ -94,7 +94,7 @@ def ShowSelectHistogram(hsvlDic, rangeSelect):
         title("Histogram")
         plot(x[:-1], histo, "blue")
         yscale("log")
-        axvspan(rangeSelect[_type][0], rangeSelect[_type][1], alpha=0.5, color='red')
+        axvspan(rangeSelectDic[_type][0], rangeSelectDic[_type][1], alpha=0.5, color='red')
     show()
 
     figsizeX, figsizeY = DiagnoalNormalize(4*imgXNor, imgYNor)
@@ -102,13 +102,13 @@ def ShowSelectHistogram(hsvlDic, rangeSelect):
     for _num, _type in enumerate(('h', 's', 'v', 'l')):
         subplot(1,4,_num+1)
         title("Selected Mask")
-        imshow(inRange(hsvlDic[_type], rangeSelect[_type][0], rangeSelect[_type][1]))
+        imshow(inRange(hsvlDic[_type], rangeSelectDic[_type][0], rangeSelectDic[_type][1]))
         axis("off")
     show()
 
     return None
 
-def ShowOverlapMask(img, mask, ratio, pathSave=None):
+def ShowOverlapMask(img, mask, ratio=1/4, pathSave=None):
     """Show masked region on original image.
 
     Parameters
@@ -125,11 +125,10 @@ def ShowOverlapMask(img, mask, ratio, pathSave=None):
     pathSave : String, default: None
         Save overlapped image's path. if None, it will be not saved.
     """
-    ratio = 1/4
     y, x, _ = img.shape
     preVimg = resize(img.astype(float), dsize=(int(x*ratio), int(y*ratio)))
     preVmask = resize(mask.astype(float), dsize=(int(x*ratio), int(y*ratio)))
-    preVmask = round(preVmask).astype(bool)
+    preVmask = preVmask.round().astype(bool)
     preVimg[preVmask == False] /= 2
     preVimg = preVimg.astype(uint8)
 
