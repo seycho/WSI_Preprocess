@@ -1,3 +1,4 @@
+from cv2 import resize
 from openslide import OpenSlide
 from numpy import  arange, array, log10, meshgrid, uint8, stack
 from numpy.random import shuffle
@@ -162,7 +163,7 @@ class WSIPatchImporter:
         Current import slide level.
     sizePixelXY : Dictionary
         Current patch image import pixel size.
-    resizePixelXY
+    sizeRePixelXY
         Current patch image resizing pixel size.
 
     Method
@@ -171,9 +172,9 @@ class WSIPatchImporter:
         Initial method of set Whole Slide Image's properties as easily readable value.
     SetDownsamples(self)
         Initial method of calculate downsample ratio of WSI and mask.
-    MakePatchCoordinates(self, sizeMicronXY, intervalMicronXY, resizePixelXY)
+    MakePatchCoordinates(self, sizeMicronXY, intervalMicronXY, sizeRePixelXY)
         Create patch image coordinates and set default import size.
-    LoadImage(self, coordinate, level=None, size=None, resize=None)
+    LoadImage(self, coordinate, level=None, size=None, sizeRe=None)
         WSI patch image import.
     LoadMask(self, maskType, coordinate, size=None)
         Mask array import.
@@ -221,13 +222,13 @@ class WSIPatchImporter:
             self.downsampleDic[maskType] = array([self.boundsDic['w'] / _w, self.boundsDic['h'] / _h]).mean()
         return None
 
-    def MakePatchCoordinates(self, sizeMicronXY, intervalMicronXY, resizePixelXY):
+    def MakePatchCoordinates(self, sizeMicronXY, intervalMicronXY, sizeRePixelXY):
         """Create patch image coordinates and set default import size.
 
         Calculate apt slide level for import image from WSI file.
         Selected level is which has (image pixel size / double resizing pixel size) ratio nearest at 1.
         Pixel size is calculated by (micron size / minimum mpp parameter).
-        Import image's pixel size and resizing pixel size will be saved Attributes parameter as sizePixelXY and resizePixelXY.
+        Import image's pixel size and resizing pixel size will be saved Attributes parameter as sizePixelXY and sizeRePixelXY.
         Also each mask's import pixel size are saved sizePixelXY parameter.
 
         After that, When image importing by LoadMask Method and if not input size and level parameter,
@@ -239,7 +240,7 @@ class WSIPatchImporter:
             Micrometer patch size array [x, y].
         intervalMicronXY : 2-D Array
             Micrometer interval size array [x, y].
-        resizePixelXY : 2-D Array
+        sizeRePixelXY : 2-D Array
             Pixel image resizing array [x, y].
 
         Returns
@@ -255,11 +256,11 @@ class WSIPatchImporter:
         """
         sizePixelXY = sizeMicronXY / self.mppDic['min']
         sizePixelLevel = sizePixelXY.mean() / self.downsampleDic["WSI"]
-        sizeRatio = sizePixelLevel / 2 / resizePixelXY.mean()
+        sizeRatio = sizePixelLevel / 2 / sizeRePixelXY.mean()
         self.level = log10(sizeRatio).__abs__().argmin()
         self.sizePixelXY = {}
         self.sizePixelXY["WSI"] = (sizePixelXY / self.downsampleDic["WSI"][self.level]).round().astype(int)
-        self.resizePixelXY = resizePixelXY
+        self.sizeRePixelXY = sizeRePixelXY
 
         for maskType in self.maskTypeList:
             downsampleMask = self.downsampleDic["WSI"][self.level] / self.downsampleDic[maskType]
@@ -271,7 +272,7 @@ class WSIPatchImporter:
 
         return coordinates
 
-    def LoadImage(self, coordinate, level=None, size=None, resize=None):
+    def LoadImage(self, coordinate, level=None, size=None, sizeRe=None):
         """WSI patch image import.
 
         Using openslide read_region, patch image extract from WSI file.
@@ -284,8 +285,8 @@ class WSIPatchImporter:
             Import slide level. Actually default parameter is self.level Attribute.
         size : 2-D Array, default: None
             Import slide pixel size. Actually default parameter is self.sizePixelXY["WSI"] Attribute.
-        resize : 2-D Array, default: None
-            Patch image resizing size. Actually default parameter is self.resizePixelXY Attribute.
+        sizeRe : 2-D Array, default: None
+            Patch image resizing size. Actually default parameter is self.sizeRePixelXY Attribute.
 
         Returns
         -------
@@ -299,13 +300,13 @@ class WSIPatchImporter:
             level = self.level
         if not size:
             size = self.sizePixelXY["WSI"]
-        if not resize:
-            resize = self.resizePixelXY
-        img = array(self.handle["WSI"].read_region((x, y), level, size).convert("RGB"))
+        if not sizeRe:
+            sizeRe = self.sizeRePixelXY
+        img = resize(array(self.handle["WSI"].read_region((x, y), level, size).convert("RGB")), dsize=sizeRe)
 
         return img
 
-    def LoadMask(self, maskType, coordinate, size=None):
+    def LoadMask(self, maskType, coordinate, size=None, sizeRe=None):
         """Mask array import.
 
         Import mask array from bigtiff mask file.
@@ -320,6 +321,8 @@ class WSIPatchImporter:
             Start coordinate of patch image in slide level 0.
         size : 2-D Array, default: None
             Import mask size. Actually default parameter is self.sizePixelXY[maskType] Attribute.
+        sizeRe : 2-D Array, default: None
+            Patch image resizing size. Actually default parameter is self.sizeRePixelXY Attribute.
 
         Returns
         -------
@@ -333,12 +336,14 @@ class WSIPatchImporter:
         coordinate = (coordinate / self.downsampleDic[maskType]).round().astype(int)
         if not size:
             size = self.sizePixelXY[maskType]
+        if not sizeRe:
+            sizeRe = self.sizeRePixelXY
         xSta = coordinate[1]
         xEnd = coordinate[1] + size[1]
         ySta = coordinate[0]
         yEnd = coordinate[0] + size[0]
 
-        return self.handle[maskType][xSta:xEnd,ySta:yEnd,0]
+        return resize(self.handle[maskType][xSta:xEnd,ySta:yEnd,0], dsize=sizeRe)
 
     def IsUsfulMask(self, maskType, coordinatesList, ratioPass=0.5, size=None):
         """Check mask array usable.

@@ -50,12 +50,15 @@ def GetWSIInfos(cur, nameSchemaEx):
     for data in results:
         corrdihuman = data[2]
         corrdilearn = data[3]
+        pathMaskSpec = data[4]
+        pathMaskAnno = data[5]
         #If not have data, It remain just None
         if bool(data[2]):
             corrdihuman = loads(corrdihuman)
         if bool(data[3]):
             corrdilearn = loads(corrdilearn)
-        tmpDic = {"filepath" : data[1], "corrdihuman" : corrdihuman, "corrdilearn" : corrdilearn}
+        tmpDic = {"filepath" : data[1], "corrdihuman" : corrdihuman, "corrdilearn" : corrdilearn,
+                  "maskspec" : pathMaskSpec, "maskanno" : pathMaskAnno}
         wsiinfo[data[0]] = tmpDic
 
     return wsiinfo
