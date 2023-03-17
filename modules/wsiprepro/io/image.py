@@ -126,7 +126,7 @@ def GetRandomCoordinates(sizePatch, sizeFull):
     combinations = array(meshgrid(xArange, yArange)).T.reshape(-1,2)
     shuffle(combinations)
 
-    return combinations
+    return combinations, len(xArange), len(yArange)
 
 class WSIPatchImporter:
     """WSI patch image and mask import class.
@@ -266,9 +266,10 @@ class WSIPatchImporter:
             downsampleMask = self.downsampleDic["WSI"][self.level] / self.downsampleDic[maskType]
             self.sizePixelXY[maskType] = (self.sizePixelXY["WSI"] * downsampleMask).round().astype(int)
 
-        sizePatch = (intervalMicronXY / self.mppDic['min']).astype(int)
-        sizeFull = (self.boundsDic['w'], self.boundsDic['h'])
-        coordinates = GetRandomCoordinates(sizePatch, sizeFull)
+        self.intervalPixelXY = (intervalMicronXY / self.mppDic['min']).astype(int)
+        sizeFull = array(self.boundsDic['w'], self.boundsDic['h'])
+        coordinates, lenX, lenY = GetRandomCoordinates(self.intervalPixelXY, sizeFull)
+        self.numPatch = array([lenX, lenY])
 
         return coordinates
 
@@ -296,11 +297,11 @@ class WSIPatchImporter:
         x, y = coordinate
         x += self.boundsDic['x']
         y += self.boundsDic['y']
-        if not level:
+        if type(level) == type(None):
             level = self.level
-        if not size:
+        if type(size) == type(None):
             size = self.sizePixelXY["WSI"]
-        if not sizeRe:
+        if type(sizeRe) == type(None):
             sizeRe = self.sizeRePixelXY
         img = resize(array(self.handle["WSI"].read_region((x, y), level, size).convert("RGB")), dsize=sizeRe)
 
@@ -334,9 +335,9 @@ class WSIPatchImporter:
         IsUsfulMask : Check mask array usable.
         """
         coordinate = (coordinate / self.downsampleDic[maskType]).round().astype(int)
-        if not size:
+        if type(size) == type(None):
             size = self.sizePixelXY[maskType]
-        if not sizeRe:
+        if type(sizeRe) == type(None):
             sizeRe = self.sizeRePixelXY
         xSta = coordinate[1]
         xEnd = coordinate[1] + size[1]
