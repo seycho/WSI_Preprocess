@@ -267,7 +267,7 @@ class WSIPatchImporter:
             self.sizePixelXY[maskType] = (self.sizePixelXY["WSI"] * downsampleMask).round().astype(int)
 
         self.intervalPixelXY = (intervalMicronXY / self.mppDic['min']).astype(int)
-        sizeFull = array(self.boundsDic['w'], self.boundsDic['h'])
+        sizeFull = array([self.boundsDic['w'], self.boundsDic['h']])
         coordinates, lenX, lenY = GetRandomCoordinates(self.intervalPixelXY, sizeFull)
         self.numPatch = array([lenX, lenY])
 
